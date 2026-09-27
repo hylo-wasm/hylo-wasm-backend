@@ -1,0 +1,79 @@
+name: Build and Test
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+      - ".gitignore"
+      - ".editorconfig"
+env:
+  ACTIONS_RUNNER_DISABLE_NODE_MAGLEV: 1
+
+jobs:
+  line-length:
+    name: "Line length"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Check max line length of 100 characters
+        # Lines ending with "[allow long]" are exempt.
+        run: >
+          ! grep -rnE --include=*.swift --exclude-dir=.build '.{101,}' .
+          | grep -vE '\[allow long\]$'
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Note: all combinations of the following will be run independently
+        os: [macos-26, ubuntu-24.04, windows-2025]
+        swift: ["6.3.2"]
+        config: [release, debug]
+
+        include:
+          # Disable exporting code coverage by default.
+          - export-coverage: false
+
+          # Enable exporting code coverage in a single configuration.
+          - os: "ubuntu-24.04"
+            config: debug
+            export-coverage: true
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Swift ${{ matrix.swift }} on ${{ matrix.os }}
+        uses: SwiftyLab/setup-swift@latest
+        with:
+          swift-version: ${{ matrix.swift }}
+
+      - name: Verify Swift version
+        run: swift --version && swift --version | grep -q ${{ matrix.swift }}
+        shell: bash
+
+      - name: Build Swift project
+        run: swift build --build-tests -Xswiftc -enable-testing -c ${{ matrix.config }} --verbose ${{ matrix.export-coverage && '--enable-code-coverage' || '' }}
+
+      - name: Run tests
+        run: swift test --skip-build -Xswiftc -enable-testing -c ${{ matrix.config }} --verbose ${{ matrix.export-coverage && '--enable-code-coverage' || '' }}
+
+      - name: Export code coverage
+        if: ${{ matrix.export-coverage }}
+        run: |
+          BIN_PATH=$(swift build --show-bin-path)
+          llvm-profdata merge -sparse $BIN_PATH/codecov/*.profraw -o $BIN_PATH/codecov/merged.profdata
+          llvm-cov export $BIN_PATH/HyloWasmBackEndPackageTests.xctest --format="lcov" --instr-profile $BIN_PATH/codecov/merged.profdata > info.lcov
+
+      - name: Upload coverage report to Codecov
+        if: ${{ matrix.export-coverage }}
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+    runs-on: ${{ matrix.os }}
