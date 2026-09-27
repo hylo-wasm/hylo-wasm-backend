@@ -4,6 +4,9 @@ import PackageDescription
 
 let package = Package(
   name: "hylo-wasm-backend",
+  platforms: [
+    .macOS(.v26)
+  ],
   products: [
     .library(
       name: "HyloWasmBackEnd",
