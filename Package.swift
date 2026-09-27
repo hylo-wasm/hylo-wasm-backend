@@ -4,23 +4,31 @@
 import PackageDescription
 
 let package = Package(
-  name: "wasm-backend",
+  name: "hylo-wasm-backend",
   products: [
     // Products define the executables and libraries a package produces, making them visible to other packages.
     .library(
-      name: "wasm-backend",
-      targets: ["wasm-backend"]
+      name: "HyloWasmBackEnd",
+      targets: ["WasmBackEnd"]
     )
+  ],
+  dependencies: [
+    .package(path: "./hylo-new"),
+    .package(path: "./swifty-wasm"),
   ],
   targets: [
     // Targets are the basic building blocks of a package, defining a module or a test suite.
     // Targets can depend on other targets in this package and products from dependencies.
     .target(
-      name: "wasm-backend"
+      name: "WasmBackEnd",
+      dependencies: [
+        .product(name: "HyloFrontEnd", package: "hylo-new"),
+        .product(name: "SwiftyWasm", package: "swifty-wasm"),
+      ]
     ),
     .testTarget(
-      name: "wasm-backendTests",
-      dependencies: ["wasm-backend"]
+      name: "WasmBackEndTests",
+      dependencies: ["WasmBackEnd"]
     ),
   ],
   swiftLanguageModes: [.v6]

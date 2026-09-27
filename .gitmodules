@@ -1,0 +1,6 @@
+[submodule "hylo-new"]
+	path = hylo-new
+	url = https://github.com/hylo-lang/hylo-new.git
+[submodule "swifty-wasm"]
+	path = swifty-wasm
+	url = https://github.com/hylo-wasm/swifty-wasm.git
