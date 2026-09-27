@@ -70,7 +70,7 @@ jobs:
         run: |
           BIN_PATH=$(swift build --show-bin-path)
           llvm-profdata merge -sparse $BIN_PATH/codecov/*.profraw -o $BIN_PATH/codecov/merged.profdata
-          llvm-cov export $BIN_PATH/HyloWasmBackEndPackageTests.xctest --format="lcov" --instr-profile $BIN_PATH/codecov/merged.profdata > info.lcov
+          llvm-cov export $BIN_PATH/hylo-wasm-backendPackageTests.xctest --format="lcov" --instr-profile $BIN_PATH/codecov/merged.profdata > info.lcov
 
       - name: Upload coverage report to Codecov
         if: ${{ matrix.export-coverage }}
